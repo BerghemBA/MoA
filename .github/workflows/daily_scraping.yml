@@ -1,0 +1,39 @@
+name: Scraping Diario de Propiedades
+
+# Configuración de cuándo se ejecuta
+on:
+  schedule:
+    - cron: '0 12 * * *' # Se ejecuta todos los días a las 12:00 UTC (9:00 AM hora Argentina)
+  workflow_dispatch:     # Este botón te permite ejecutarlo manualmente para probar
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Instalar dependencias
+        run: |
+          pip install requests beautifulsoup4 pandas
+          # Agrega aquí otras librerías si tu script las necesita
+
+      - name: Ejecutar script de scraping
+        env:
+          # Estas variables se conectan con los "Secrets" que creamos en Settings
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        run: python mi_script_scraping.py 
+
+      - name: Guardar cambios (avisos ya vistos)
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git add avisos_enviados.txt || echo "No hay archivo de base de datos todavía"
+          git commit -m "Actualizar lista de avisos vistos" || echo "No hay nuevos avisos para guardar"
+          git push
